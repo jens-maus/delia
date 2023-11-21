@@ -228,7 +228,8 @@ class PatientsDatabase:
             add_sitk_image_metadata_as_attributes: bool = True,
             organs_to_keep: Optional[Union[str, List[str]]] = None,
             overwrite_database: bool = False,
-            shallow_hierarchy: bool = False
+            shallow_hierarchy: bool = False,
+            transpose: bool = True
     ) -> List[PatientWhoFailed]:
         """
         Create an hdf5 file database from multiple patients dicom files and their segmentation. The goal is to create
@@ -250,6 +251,8 @@ class PatientsDatabase:
             Overwrite existing database.
         shallow_hierarchy : bool, default = False.
             Creates database with shallow hierarchy.
+        transpose : bool, default = True.
+            Transpose the image array before using it.
 
         Returns
         -------
@@ -297,11 +300,14 @@ class PatientsDatabase:
                           data=json.dumps(patient_image_data.image.dicom_header.to_json_dict())
                       )
 
-                    image_array = sitk.GetArrayFromImage(patient_image_data.image.simple_itk_image)
+                    if transpose is True:
+                      image_array = self._transpose(sitk.GetArrayFromImage(patient_image_data.image.simple_itk_image))
+                    else:
+                      image_array = sitk.GetArrayFromImage(patient_image_data.image.simple_itk_image)
 
                     data_set = series_group.create_dataset(
                         name=image_name,
-                        data=self._transpose(image_array)
+                        data=image_array
                     )
 
                     if shallow_hierarchy is True:
@@ -317,12 +323,15 @@ class PatientsDatabase:
                             segmentation_group.attrs.create(name=self.MODALITY, data=segmentation.modality)
 
                             for organ, simple_itk_label_map in segmentation.simple_itk_label_maps.items():
-                                numpy_array_label_map = sitk.GetArrayFromImage(simple_itk_label_map)
+                                if transpose is True:
+                                    numpy_array_label_map = self._transpose(sitk.GetArrayFromImage(simple_itk_label_map))
+                                else:
+                                    numpy_array_label_map = sitk.GetArrayFromImage(simple_itk_label_map)
 
                                 if organs_to_keep is None or organ in organs_to_keep:
                                     segmentation_group.create_dataset(
                                         name=organ,
-                                        data=self._transpose(numpy_array_label_map),
+                                        data=numpy_array_label_map,
                                         dtype=np.int8
                                     )
 
