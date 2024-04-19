@@ -20,7 +20,7 @@ setuptools.setup(
     ],
     install_requires=[
         "h5py",
-        "monai==1.0.1",
+        "monai",
         "numpy",
         "pandas",
         "pydicom",
