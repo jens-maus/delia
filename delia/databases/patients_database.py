@@ -295,11 +295,6 @@ class PatientsDatabase:
                     if add_sitk_image_metadata_as_attributes:
                         self._add_sitk_image_attributes_to_hdf5_group(patient_image_data, series_group)
 
-                    series_group.create_dataset(
-                        name=self.DICOM_HEADER,
-                        data=json.dumps(patient_image_data.image.dicom_header.to_json_dict())
-                    )
-
                     if transpose is True:
                         image_array = self._transpose(sitk.GetArrayFromImage(patient_image_data.image.simple_itk_image))
                     else:
@@ -308,6 +303,11 @@ class PatientsDatabase:
                     data_set = series_group.create_dataset(
                         name=image_name,
                         data=image_array
+                    )
+
+                    data_set.attrs.create(
+                        name=self.DICOM_HEADER,
+                        data=json.dumps(patient_image_data.image.dicom_header.to_json_dict())
                     )
 
                     if shallow_hierarchy is True:
