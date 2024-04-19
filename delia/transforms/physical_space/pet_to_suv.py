@@ -94,27 +94,43 @@ class PETtoSUVd(PhysicalSpaceTransform):
         if hasattr(header, "AcquisitionTime"):
             try:
                 scan_time = datetime.strptime(header.AcquisitionTime, '%H%M%S.%f')
+            except ValueError:
+                try:
+                    scan_time = datetime.strptime(header.AcquisitionTime, '%H%M%S')
+                except ValueError:
+                    _logger.warning(
+                        f"Unknown time data format (Expected '%H%M%S.%f). Using estimated time delay between injection "
+                        f"and scan of {DefaultParams.SCAN_INJECTION_DELAY / 60} minutes, i.e. 90 min waiting time + 15 min "
+                        f"preparation."
+                    )
+                    return DefaultParams.SCAN_INJECTION_DELAY
 
-                if hasattr(header.RadiopharmaceuticalInformationSequence[0], "RadiopharmaceuticalStartTime"):
+            if hasattr(header.RadiopharmaceuticalInformationSequence[0], "RadiopharmaceuticalStartTime"):
+                try:
                     injection_time = datetime.strptime(
                         header.RadiopharmaceuticalInformationSequence[0].RadiopharmaceuticalStartTime, '%H%M%S.%f'
                     )
+                except ValueError:
+                    try:
+                        injection_time = datetime.strptime(
+                            header.RadiopharmaceuticalInformationSequence[0].RadiopharmaceuticalStartTime, '%H%M%S'
+                        )
+                    except ValueError:
+                        _logger.warning(
+                            f"Unknown time data format (Expected '%H%M%S.%f). Using estimated time delay between injection "
+                            f"and scan of {DefaultParams.SCAN_INJECTION_DELAY / 60} minutes, i.e. 90 min waiting time + 15 min "
+                            f"preparation."
+                        )
+                        return DefaultParams.SCAN_INJECTION_DELAY
 
-                    return (scan_time - injection_time).seconds
-                else:
-                    _logger.warning(
-                        f"Attribute 'RadiopharmaceuticalStartTime' doesn't exist. Using estimated time delay between "
-                        f"injection and scan of {DefaultParams.SCAN_INJECTION_DELAY / 60} minutes, i.e. 90 min waiting "
-                        f"time + 15 min preparation."
-                    )
-
-                    return DefaultParams.SCAN_INJECTION_DELAY
-            except ValueError:
+                return (scan_time - injection_time).seconds
+            else:
                 _logger.warning(
-                    f"Unknown time data format (Expected '%H%M%S.%f). Using estimated time delay between injection "
-                    f"and scan of {DefaultParams.SCAN_INJECTION_DELAY / 60} minutes, i.e. 90 min waiting time + 15 min "
-                    f"preparation."
+                    f"Attribute 'RadiopharmaceuticalStartTime' doesn't exist. Using estimated time delay between "
+                    f"injection and scan of {DefaultParams.SCAN_INJECTION_DELAY / 60} minutes, i.e. 90 min waiting "
+                    f"time + 15 min preparation."
                 )
+
                 return DefaultParams.SCAN_INJECTION_DELAY
         else:
             _logger.warning(
