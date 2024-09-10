@@ -91,12 +91,12 @@ class PETtoSUVd(PhysicalSpaceTransform):
         time_delay : float
             Time delay in seconds.
         """
-        if hasattr(header, "AcquisitionTime"):
+        if hasattr(header, "StudyTime"):
             try:
-                scan_time = datetime.strptime(header.AcquisitionTime, '%H%M%S.%f')
+                scan_time = datetime.strptime(header.StudyTime, '%H%M%S.%f')
             except ValueError:
                 try:
-                    scan_time = datetime.strptime(header.AcquisitionTime, '%H%M%S')
+                    scan_time = datetime.strptime(header.StudyTime, '%H%M%S')
                 except ValueError:
                     _logger.warning(
                         f"Unknown time data format (Expected '%H%M%S.%f). Using estimated time delay between injection "
@@ -134,7 +134,7 @@ class PETtoSUVd(PhysicalSpaceTransform):
                 return DefaultParams.SCAN_INJECTION_DELAY
         else:
             _logger.warning(
-                f"Attribute 'AcquisitionTime' doesn't exist. Using estimated time delay between injection and "
+                f"Attribute 'StudyTime' doesn't exist. Using estimated time delay between injection and "
                 f"scan of {DefaultParams.SCAN_INJECTION_DELAY / 60} minutes, i.e. 90 min waiting time + 15 min "
                 f"preparation."
             )
